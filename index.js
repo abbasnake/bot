@@ -19,33 +19,105 @@ const waitHere = myState => {
 
 const isBox = tile => tile === '0';
 
+const isUndefined = tile => {
+    return tile === undefined
+}
 
+const checkBlastValue = (tableState, { x, y }) => {
+    let value = 0;
+
+    let rightOne = tableState[`row_${ y }`].split('')[x + 1];
+    rightOne = isUndefined(rightOne) ? false : rightOne;
+
+    let rightTwo = tableState[`row_${ y }`].split('')[x + 2];
+    rightTwo = isUndefined(rightTwo) ? false : rightTwo;
+
+    let leftOne = tableState[`row_${ y }`].split('')[x - 1];
+    leftOne = isUndefined(leftOne) ? false : leftOne;
+
+    let leftTwo = tableState[`row_${ y }`].split('')[x - 2];
+    leftTwo = isUndefined(leftTwo) ? false : leftTwo;
+
+    let rowDownOne = isUndefined(tableState[`row_${ y + 1 }`]) ? false : tableState[`row_${ y + 1 }`].split('')[x];
+    let rowDownTwo = isUndefined(tableState[`row_${ y + 2 }`]) ? false : tableState[`row_${ y + 2 }`].split('')[x];
+
+    let rowUpOne = isUndefined(tableState[`row_${ y - 1 }`]) ? false : tableState[`row_${ y - 1 }`].split('')[x];
+    let rowUpTwo = isUndefined(tableState[`row_${ y - 2 }`]) ? false : tableState[`row_${ y - 2 }`].split('')[x];
+
+
+    // check right
+    if (rightOne === '0') value++
+    if (rightTwo === '0') value++
+    if (leftOne === '0') value++
+    if (leftTwo === '0') value++
+    if (rowDownOne === '0') value++
+    if (rowDownTwo === '0') value++
+    if (rowUpOne === '0') value++
+    if (rowUpTwo === '0') value++
+
+
+    printErr('blast value', value);
+
+    return value;
+}
 
 const isGoodPlaceToBomb = (tableState, myState) => {
     const { x, y } = myState;
     // do 3 tiles to the right contain a box?
-    const twoTilesRight = tableState[`row_${ y }`].split('').slice(x + 1, x + 3);
+    // const twoTilesRight = tableState[`row_${ y }`].split('').slice(x + 1, x + 3);
 
-    if (twoTilesRight[0] === '0' || twoTilesRight[1] === '0') return true;
+    // if (twoTilesRight[0] === '0' || twoTilesRight[1] === '0') return true;
 
-    // do 3 tiles down contain a box?
-    if (y < height - 3) {
-        const twoTilesDown = [tableState[`row_${ y + 1 }`].split('')[x], tableState[`row_${ y + 2 }`].split('')[x]];
-        if (twoTilesDown[0] === '0' || twoTilesDown[1] === '0') return true;
+    // // do 3 tiles down contain a box?
+    // if (y < height - 3) {
+    //     const twoTilesDown = [tableState[`row_${ y + 1 }`].split('')[x], tableState[`row_${ y + 2 }`].split('')[x]];
+    //     if (twoTilesDown[0] === '0' || twoTilesDown[1] === '0') return true;
+    // }
+
+    // get info on first 7 tiles
+    const maxMoves = 7;
+    // const currentRow = tableState[`row_${ y }`].split('').slice(x + 1, x + 7);
+    // printErr('current Row--', currentRow);
+
+    bestLocationAndValue = { x, y, value: 0 };
+
+    for (let i = 0; i < maxMoves; i++) {
+        for (let j = 0; j < maxMoves - i; j++) {
+            let currentTile = isUndefined(tableState[`row_${ y + j }`]) ? false : tableState[`row_${ y + j }`];
+            if (currentTile !== false) {
+                currentTile = isUndefined(currentTile.split('')[x + i]) ? false : currentTile.split('')[x + i];
+            }
+
+            if (currentTile === '.') {
+                const currentLocationValue = checkBlastValue(tableState, { x: x + i, y: y + j });
+
+                if (currentLocationValue > bestLocationAndValue.value) {
+                    bestLocationAndValue = { x: x + i, y: y + j, value: currentLocationValue }
+                }
+            }
+        } 
     }
-    
-    // do 3 tiles left contain a box?
-    const twoTilesLeft = tableState[`row_${ y }`].split('').slice(x - 2, x);
 
-    if (twoTilesLeft[0] === '0' || twoTilesLeft[1] === '0') return true;
-    // do 3 tiles up contain a box?
-    if (y > 1) {
-        const twoTilesUp = [tableState[`row_${ y - 1 }`].split('')[x], tableState[`row_${ y - 2 }`].split('')[x]];
-        
-        if (twoTilesUp[0] === '0' || twoTilesUp[1] === '0') return true;
+    for (let i = 0; i < maxMoves; i++) {
+        for (let j = 0; j < maxMoves - i; j++) {
+            let currentTile = isUndefined(tableState[`row_${ y - j }`]) ? false : tableState[`row_${ y - j }`];
+            if (currentTile !== false) {
+                currentTile = isUndefined(currentTile.split('')[x - i]) ? false : currentTile.split('')[x - i];
+            }
+
+            if (currentTile === '.') {
+                const currentLocationValue = checkBlastValue(tableState, { x: x - i, y: y - j });
+
+                if (currentLocationValue > bestLocationAndValue.value) {
+                    bestLocationAndValue = { x: x - i, y: y - j, value: currentLocationValue }
+                }
+            }
+        } 
     }
 
-    return false;
+    printErr('best location and value-------------', `${ bestLocationAndValue.x } ${ bestLocationAndValue.y } ${ bestLocationAndValue.value }`)
+
+    return bestLocationAndValue;
 }
 
 const moveToBetterLocation = (myState, letsBomb = false) => {
@@ -82,15 +154,17 @@ const moveToBetterLocation = (myState, letsBomb = false) => {
 const run = (tableState, myState) => {
     info(tableState, myState);
 
-    const shouldBomb = isGoodPlaceToBomb(tableState, myState);
+    const bestLocationAndValue = isGoodPlaceToBomb(tableState, myState);
 
-    if (myState.canBomb && shouldBomb) {
-        moveToBetterLocation(myState, shouldBomb);
-    } else if (shouldBomb) {
-        waitHere(myState);
-    } else {
-        moveToBetterLocation(myState);
-    }
+    bombAndMoveTo(bestLocationAndValue.x, bestLocationAndValue.y);
+
+    // if (myState.canBomb && shouldBomb) {
+    //     moveToBetterLocation(myState, shouldBomb);
+    // } else if (shouldBomb) {
+    //     waitHere(myState);
+    // } else {
+    //     moveToBetterLocation(myState);
+    // }
 }
 
 ///////////////////////////////////////////////////////////////
