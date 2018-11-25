@@ -20,7 +20,9 @@ const waitHere = myState => {
     print(`MOVE ${ myState.x } ${ myState.y }`);
 }
 
-const isBox = tile => tile === '0';
+const isBox = tile => tile === '0' || tile === '1' || tile === '2';
+
+const isWall = tile => tile === 'X';
 
 const isUndefined = tile => {
     return tile === undefined
@@ -58,16 +60,29 @@ const checkBlastValue = (tableState, { x, y }) => {
     let rowUpOne = isUndefined(tableState[`row_${ y - 1 }`]) ? false : tableState[`row_${ y - 1 }`].split('')[x];
     let rowUpTwo = isUndefined(tableState[`row_${ y - 2 }`]) ? false : tableState[`row_${ y - 2 }`].split('')[x];
 
-    if (rightOne === '0' || rightOne === '1' || rightOne === '2') value++
-    if (rightTwo === '0' || rightTwo === '1' || rightTwo === '2') value++
-    if (leftOne === '0' || leftOne === '1' || leftOne === '2') value++
-    if (leftTwo === '0' || leftTwo === '1' || leftTwo === '2') value++
-    if (rowDownOne === '0' || rowDownOne === '1' || rowDownOne === '2') value++
-    if (rowDownTwo === '0' || rowDownTwo === '1' || rowDownTwo === '2') value++
-    if (rowUpOne === '0' || rowUpOne === '1' || rowUpOne === '2') value++
-    if (rowUpTwo === '0' || rowUpTwo === '1' || rowUpTwo === '2') value++
+    if (isBox(rightOne)) value++
+    if (isWall(rightOne)) value--
 
-    printErr('blast value', value);
+    if (isBox(rightTwo)) value++
+    if (isWall(rightTwo)) value--
+
+    if (isBox(leftOne)) value++
+    if (isWall(leftOne)) value--
+
+    if (isBox(leftTwo)) value++
+    if (isWall(leftTwo)) value--
+
+    if (isBox(rowDownOne)) value++
+    if (isWall(rowDownOne)) value--
+
+    if (isBox(rowDownTwo)) value++
+    if (isWall(rowDownTwo)) value--
+
+    if (isBox(rowUpOne)) value++
+    if (isWall(rowUpOne)) value--
+
+    if (isBox(rowUpTwo)) value++
+    if (isWall(rowUpTwo)) value--
 
     return value;
 }
@@ -117,8 +132,6 @@ const findGoodPlaceToBomb = (tableState, myState) => {
         } 
     }
 
-    printErr('best location and value-------------', `${ bestLocationAndValue.x } ${ bestLocationAndValue.y } ${ bestLocationAndValue.value }`)
-
     return bestLocationAndValue;
 }
 
@@ -144,7 +157,7 @@ const run = (tableState, myState) => {
     } else if (inDesiredLocaion) {
         waitHere(myState);
     } else {
-        moveTo(destination.x, destination.y);
+        bombAndMoveTo(destination.x, destination.y);
     }
 }
 
