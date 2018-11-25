@@ -1,3 +1,4 @@
+// GLOBAL VARIABLES
 let destination = false;
 const bombingHistory = [];
 let hidingDestination = false;
@@ -6,12 +7,6 @@ let hidingTimer = 8;
 let firstLoop = true;
 
 // HELPERS
-const info = (tableState, myState) => {
-    const { x, y, canBomb } = myState;
-    printErr(`MY STATE - X: ${ x }, Y: ${ y }, canBomb: ${ canBomb === 1 }`);
-    printErr('--------------------------');
-}
-
 const moveTo = (x, y) => {
     print(`MOVE ${ x } ${ y }`);
 }
@@ -28,9 +23,7 @@ const isBox = tile => tile === '0' || tile === '1' || tile === '2';
 
 const isWall = tile => tile === 'X';
 
-const isUndefined = tile => {
-    return tile === undefined
-}
+const isUndefined = tile => tile === undefined;
 
 // CHECK IF BOMB HAS ALREADY BEEN PLACED HERE AT SOME POINT
 const consultHistory = locationAndValue => {
@@ -98,6 +91,7 @@ const findGoodPlaceToBomb = (tableState, myState) => {
     const { x, y } = myState;
 
     let maxMoves = 4;
+
     if (firstLoop) {
         maxMoves = 5;
         firstLoop = false;
@@ -299,8 +293,6 @@ const findHidingPlace = (tableState, myState) => {
 
 // MAIN FUNCTION
 const run = (tableState, myState) => {
-    info(tableState, myState);
-
     if (!destination) {
         const bestLocationAndValue = findGoodPlaceToBomb(tableState, myState);
         destination = { x: bestLocationAndValue.x, y: bestLocationAndValue.y };
