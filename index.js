@@ -58,14 +58,14 @@ const checkBlastValue = (tableState, { x, y }) => {
     let rowUpOne = isUndefined(tableState[`row_${ y - 1 }`]) ? false : tableState[`row_${ y - 1 }`].split('')[x];
     let rowUpTwo = isUndefined(tableState[`row_${ y - 2 }`]) ? false : tableState[`row_${ y - 2 }`].split('')[x];
 
-    if (rightOne === '0') value++
-    if (rightTwo === '0') value++
-    if (leftOne === '0') value++
-    if (leftTwo === '0') value++
-    if (rowDownOne === '0') value++
-    if (rowDownTwo === '0') value++
-    if (rowUpOne === '0') value++
-    if (rowUpTwo === '0') value++
+    if (rightOne === '0' || rightOne === '1' || rightOne === '2') value++
+    if (rightTwo === '0' || rightTwo === '1' || rightTwo === '2') value++
+    if (leftOne === '0' || leftOne === '1' || leftOne === '2') value++
+    if (leftTwo === '0' || leftTwo === '1' || leftTwo === '2') value++
+    if (rowDownOne === '0' || rowDownOne === '1' || rowDownOne === '2') value++
+    if (rowDownTwo === '0' || rowDownTwo === '1' || rowDownTwo === '2') value++
+    if (rowUpOne === '0' || rowUpOne === '1' || rowUpOne === '2') value++
+    if (rowUpTwo === '0' || rowUpTwo === '1' || rowUpTwo === '2') value++
 
     printErr('blast value', value);
 
@@ -75,7 +75,7 @@ const checkBlastValue = (tableState, { x, y }) => {
 const findGoodPlaceToBomb = (tableState, myState) => {
     const { x, y } = myState;
 
-    const maxMoves = 8;
+    const maxMoves = 10;
 
     bestLocationAndValue = { x, y, value: 0 };
 
