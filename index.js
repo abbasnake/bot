@@ -1,3 +1,6 @@
+let destination = false;
+const bombingHistory = [];
+
 // HELPERS
 const info = (tableState, myState) => {
     const { x, y, canBomb } = myState;
@@ -23,6 +26,17 @@ const isUndefined = tile => {
     return tile === undefined
 }
 
+const consultHistory = locationAndValue => {
+    let value = locationAndValue.value;
+
+    for (let i = 0; i < bombingHistory.length; i++) {
+        if (bombingHistory[i].x === locationAndValue.x && bombingHistory[i].y === locationAndValue.y) {
+            value = 0;
+        }
+    }
+    return value;
+}
+
 const checkBlastValue = (tableState, { x, y }) => {
     let value = 0;
 
@@ -44,8 +58,6 @@ const checkBlastValue = (tableState, { x, y }) => {
     let rowUpOne = isUndefined(tableState[`row_${ y - 1 }`]) ? false : tableState[`row_${ y - 1 }`].split('')[x];
     let rowUpTwo = isUndefined(tableState[`row_${ y - 2 }`]) ? false : tableState[`row_${ y - 2 }`].split('')[x];
 
-
-    // check right
     if (rightOne === '0') value++
     if (rightTwo === '0') value++
     if (leftOne === '0') value++
@@ -55,29 +67,15 @@ const checkBlastValue = (tableState, { x, y }) => {
     if (rowUpOne === '0') value++
     if (rowUpTwo === '0') value++
 
-
     printErr('blast value', value);
 
     return value;
 }
 
-const isGoodPlaceToBomb = (tableState, myState) => {
+const findGoodPlaceToBomb = (tableState, myState) => {
     const { x, y } = myState;
-    // do 3 tiles to the right contain a box?
-    // const twoTilesRight = tableState[`row_${ y }`].split('').slice(x + 1, x + 3);
 
-    // if (twoTilesRight[0] === '0' || twoTilesRight[1] === '0') return true;
-
-    // // do 3 tiles down contain a box?
-    // if (y < height - 3) {
-    //     const twoTilesDown = [tableState[`row_${ y + 1 }`].split('')[x], tableState[`row_${ y + 2 }`].split('')[x]];
-    //     if (twoTilesDown[0] === '0' || twoTilesDown[1] === '0') return true;
-    // }
-
-    // get info on first 7 tiles
-    const maxMoves = 7;
-    // const currentRow = tableState[`row_${ y }`].split('').slice(x + 1, x + 7);
-    // printErr('current Row--', currentRow);
+    const maxMoves = 8;
 
     bestLocationAndValue = { x, y, value: 0 };
 
@@ -89,7 +87,9 @@ const isGoodPlaceToBomb = (tableState, myState) => {
             }
 
             if (currentTile === '.') {
-                const currentLocationValue = checkBlastValue(tableState, { x: x + i, y: y + j });
+                let currentLocationValue = checkBlastValue(tableState, { x: x + i, y: y + j });
+
+                currentLocationValue = consultHistory({ x: x + i, y: y + j, value: currentLocationValue });
 
                 if (currentLocationValue > bestLocationAndValue.value) {
                     bestLocationAndValue = { x: x + i, y: y + j, value: currentLocationValue }
@@ -106,7 +106,9 @@ const isGoodPlaceToBomb = (tableState, myState) => {
             }
 
             if (currentTile === '.') {
-                const currentLocationValue = checkBlastValue(tableState, { x: x - i, y: y - j });
+                let currentLocationValue = checkBlastValue(tableState, { x: x - i, y: y - j });
+
+                currentLocationValue = consultHistory({ x: x - i, y: y - j, value: currentLocationValue });
 
                 if (currentLocationValue > bestLocationAndValue.value) {
                     bestLocationAndValue = { x: x - i, y: y - j, value: currentLocationValue }
@@ -120,51 +122,30 @@ const isGoodPlaceToBomb = (tableState, myState) => {
     return bestLocationAndValue;
 }
 
-const moveToBetterLocation = (myState, letsBomb = false) => {
-    const { x, y } = myState;
-
-    if (x !== width - 1 && y !== height - 1 && y === 0) {
-        if (letsBomb) {
-            bombAndMoveTo(myState.x + 1, myState.y);
-        } else {
-            moveTo(myState.x + 1, myState.y);
-        }
-    } else if (y !== height - 1 && x !== 0) {
-        if (letsBomb) {
-            bombAndMoveTo(myState.x, myState.y + 1);
-        } else {
-            moveTo(myState.x, myState.y + 1);
-        }
-    } else if (x !== 0) {
-        if (letsBomb) {
-            bombAndMoveTo(myState.x - 1, myState.y);
-        } else {
-            moveTo(myState.x - 1, myState.y);
-        }
-    } else {
-        if (letsBomb) {
-            bombAndMoveTo(myState.x, myState.y - 1);
-        } else {
-            moveTo(myState.x, myState.y - 1);
-        }
-    }
-}
-
 // MAIN FUNCTION
 const run = (tableState, myState) => {
     info(tableState, myState);
 
-    const bestLocationAndValue = isGoodPlaceToBomb(tableState, myState);
+    if (!destination) {
+        const bestLocationAndValue = findGoodPlaceToBomb(tableState, myState);
+        destination = { x: bestLocationAndValue.x, y: bestLocationAndValue.y };
+        bombingHistory.push(destination);
+    }
 
-    bombAndMoveTo(bestLocationAndValue.x, bestLocationAndValue.y);
+    const inDesiredLocaion = destination.x === myState.x && destination.y === myState.y;
 
-    // if (myState.canBomb && shouldBomb) {
-    //     moveToBetterLocation(myState, shouldBomb);
-    // } else if (shouldBomb) {
-    //     waitHere(myState);
-    // } else {
-    //     moveToBetterLocation(myState);
-    // }
+    if (inDesiredLocaion && myState.canBomb) {
+        const bestLocationAndValue = findGoodPlaceToBomb(tableState, myState);
+
+        bombAndMoveTo(bestLocationAndValue.x, bestLocationAndValue.y);
+
+        destination = { x: bestLocationAndValue.x, y: bestLocationAndValue.y };
+        bombingHistory.push(destination);
+    } else if (inDesiredLocaion) {
+        waitHere(myState);
+    } else {
+        moveTo(destination.x, destination.y);
+    }
 }
 
 ///////////////////////////////////////////////////////////////
